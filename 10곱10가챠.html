@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>10x10 칸 누적 게임</title>
+  <!-- Google Fonts 적용 -->
+  <link href="https://fonts.googleapis.com/css?family=Poppins:400,500,600&display=swap" rel="stylesheet">
+  <style>
+    /* 전체 스타일 */
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 20px;
+      margin: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      /* 스크롤 방지 */
+      overflow: hidden;
+    }
+
+    h2 {
+      font-size: 26px;
+      color: #2c3e50;
+      margin-bottom: 15px;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    p {
+      margin-bottom: 10px;
+      text-align: center;
+      font-size: 14px;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    #info-bar {
+      text-align: center;
+      margin-bottom: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    /* 레벨 정보 표시 UI */
+    #level-info {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #555;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    /* 테이블 컨테이너 스타일 */
+    #tables-container {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      margin-bottom: 20px;
+      width: fit-content;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 확률 표 스타일 */
+    #probabilityTable {
+      border-collapse: collapse;
+      margin-left: 20px;
+      width: auto;
+      display: inline-block;
+      vertical-align: top;
+      font-size: 14px;
+    }
+
+    #probabilityTable caption {
+      caption-side: top;
+      text-align: center;
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #555;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    #probabilityTable th,
+    #probabilityTable td {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    /* 게임 테이블 스타일 */
+    #gameTable {
+      border-collapse: separate;
+      border-spacing: 1px;
+      margin-right: 0;
+      display: inline-block;
+      vertical-align: top;
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    th, td {
+      text-align: center;
+      font-size: 14px;
+    }
+
+    td {
+      background-color: #f9f9f9; /* 약간 어두운 배경색 */
+      transition: background-color 0.15s ease-in-out;
+      border: 2px solid #bbb;
+    }
+
+    td:focus {
+      outline: 2px solid #007bff;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+
+    #gameTable td {
+      cursor: pointer;
+      /* 칸 가로세로 크기 고정 (정사각형) */
+      width: 40px;
+      height: 40px;
+      font-size: 18px;
+      border-radius: 6px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #gameTable td:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* clicked 클래스: 클릭 시 시각적 피드백 (약간 투명해짐 + 살짝 축소) */
+    .clicked {
+      opacity: 0.7;
+      transform: scale(0.95);
+      transition: transform 0.1s ease-in-out, opacity 0.1s ease-in-out;
+    }
+
+    /* 결과별 스타일 */
+    .꽝 {
+      background-color: #f8f9fa;
+      color: #6c757d;
+    }
+
+    .minus-500 {
+      background-color: #ffebee;
+      color: #d32f2f;
+    }
+
+    .minus-1000 {
+      background-color: #ffcdd2;
+      color: #c62828;
+    }
+
+    .minus-5000 {
+      background-color: #ef9a9a;
+      color: #b71c1c;
+      font-weight: bold;
+    }
+
+    .plus-500 {
+      background-color: #e8f5e9;
+      color: #388e3c;
+    }
+
+    .plus-1000 {
+      background-color: #c8e6c9;
+      color: #2e7d32;
+    }
+
+    .plus-5000 {
+      background-color: #a5d6a7;
+      color: #1b5e20;
+      font-weight: bold;
+    }
+
+    .plus-10000 {
+      background-color: #80cbc4;
+      color: #004d40;
+      font-weight: bolder;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    #button-group {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    #buy-chance-btn, #give-up-btn {
+      padding: 10px 20px;
+      cursor: pointer;
+      margin: 0 10px;
+      font-size: 14px;
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      background: linear-gradient(45deg, #3498db, #2980b9);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: background 0.3s ease;
+    }
+
+    #buy-chance-btn:hover, #give-up-btn:hover {
+      background: linear-gradient(45deg, #2980b9, #3498db);
+    }
+
+    #buy-chance-btn:disabled, #give-up-btn:disabled {
+      background: #6c757d;
+      cursor: default;
+    }
+
+    /* 튜토리얼 오버레이 스타일 */
+    #tutorial-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.85);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    #tutorial-content {
+      background-color: white;
+      color: black;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      text-align: left;
+      max-width: 80%;
+      max-height: 80%;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    #tutorial-close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 24px;
+      color: #777;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+
+    #tutorial-close-btn:hover {
+      color: #333;
+    }
+
+    /* 모바일 환경 스타일 */
+    @media screen and (max-width: 768px) {
+      body {
+        padding-top: 10px;
+      }
+
+      h2 {
+        font-size: 22px;
+      }
+
+      p {
+        font-size: 12px;
+      }
+
+      #info-bar, #level-info {
+        font-size: 12px;
+        margin-bottom: 10px;
+      }
+
+      #tables-container {
+        flex-direction: column;
+        align-items: center;
+        width: 95%;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+
+      #probabilityTable {
+        margin-left: 0;
+        margin-top: 15px;
+        width: 95%;
+        display: block;
+      }
+
+      #gameTable {
+        margin-right: 0;
+        width: 95%;
+        display: block;
+      }
+
+      #gameTable td {
+        width: calc(95vw / 10 - 12px);
+        height: calc(95vw / 10 - 12px);
+        font-size: 16px;
+      }
+
+      #button-group {
+        margin-top: 10px;
+      }
+
+      #buy-chance-btn, #give-up-btn {
+        padding: 6px 12px;
+        font-size: 12px;
+        margin: 0 5px;
+      }
+    }
+
+    /* 터치 장치 (pointer: coarse) 환경: 터치 시 hover 효과 제거 */
+    @media (pointer: coarse) {
+      #gameTable td:hover {
+        transform: none;
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body role="application" aria-label="10x10 칸 누적 게임" oncontextmenu="return false">
+  <!-- 튜토리얼 오버레이 -->
+  <div id="tutorial-overlay">
+    <div id="tutorial-content">
+      <button id="tutorial-close-btn" aria-label="튜토리얼 닫기">×</button>
+      <h2>10x10 칸 누적 게임 튜토리얼</h2>
+      <p><strong>게임 방법:</strong></p>
+      <ol>
+        <li>10x10 칸 테이블에서 칸을 클릭하여 결과를 확인하세요.</li>
+        <li>각 칸에는 "꽝", "+500원", "-1000원" 등 다양한 결과가 숨겨져 있습니다.</li>
+        <li>결과에 따라 자금이 변동되며, 기회가 소진됩니다.</li>
+        <li>기회가 모두 소진되면 게임 오버!</li>
+      </ol>
+      <p><strong>목표:</strong></p>
+      <p>자금을 최대한 많이 누적해보세요! 파산하지 않고 오래 버티는 것도 중요합니다.</p>
+      <p><strong>팁:</strong></p>
+      <ul>
+        <li>기회를 모두 사용하기 전에 "기회 추가" 버튼을 눌러 기회를 구매할 수 있습니다. (500원 소모)</li>
+        <li>언제 기회를 구매하고, 언제 포기할지 전략적으로 판단해보세요.</li>
+        <li>결과 확률 표를 참고하여 게임 전략을 세울 수 있습니다.</li>
+      </ul>
+      <p>재미있게 즐기세요!</p>
+    </div>
+  </div>
+
+  <h2>10x10 칸 누적 게임</h2>
+
+  <!-- 게임 정보 및 레벨 정보 -->
+  <div id="info-bar" role="region" aria-live="polite" aria-label="게임 정보">
+    기회: <span id="chances" role="status" aria-live="assertive" aria-label="남은 기회">10</span> 회 | 자금: <span id="balance" role="status" aria-live="assertive" aria-label="현재 자금">0</span> 원
+  </div>
+
+  <div id="level-info">
+    레벨: <span id="level">1</span> | 경험치: <span id="experience">0</span> / <span id="experience-per-level">10000</span>
+  </div>
+
+  <p>칸을 클릭하거나, 키보드 탭/엔터 키로 조작하여 결과를 확인하세요.</p>
+
+  <!-- 게임 테이블 및 확률 정보 테이블 -->
+  <div id="tables-container">
+    <table id="gameTable" role="grid" aria-label="게임 테이블">
+    </table>
+
+    <table id="probabilityTable" role="table" aria-label="확률 정보 테이블">
+      <caption>결과 확률 표</caption>
+      <thead>
+        <tr>
+          <th>결과</th>
+          <th>확률</th>
+        </tr>
+      </thead>
+      <tbody id="probabilityTableBody">
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 버튼 그룹 -->
+  <div id="button-group">
+    <button id="buy-chance-btn" role="button" aria-label="기회 추가 버튼">기회 추가 (500원)</button>
+    <button id="give-up-btn" role="button" aria-label="포기하기 버튼">포기하기</button>
+  </div>
+
+  <script>
+    // [UX 개선] 클릭 사운드 효과
+    const clickSound = new Audio('click_sound.mp3'); // ⚠️ HTML 파일과 같은 폴더에 'click_sound.mp3' 파일을 넣어주세요!
+
+    // [보안 기능] 개발자 도구 관련 이벤트
+    document.addEventListener('keydown', function(event) {
+      if (
+        event.key === 'F12' ||
+        (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'J')) ||
+        (event.metaKey && event.shiftKey && event.key === 'I')
+      ) {
+        event.preventDefault();
+        alert('⚠️ 공정한 게임 플레이를 위해 개발자 도구 사용을 자제해주세요. ⚠️');
+        return false;
+      }
+    });
+
+    function checkDevTool() {
+      const startTime = performance.now();
+      // 개발자 도구 감지를 위한 디버거 구문은 제거하였습니다.
+      const endTime = performance.now();
+      const isDevToolOpen = (endTime - startTime) > 100;
+      if (isDevToolOpen) {
+        location.reload();
+      }
+    }
+    setInterval(checkDevTool, 1000);
+
+    document.addEventListener('copy', function(event) {
+      event.preventDefault();
+    });
+
+    const outcomes = [
+      { result: "꽝", probability: 0.1, amount: 0 },
+      { result: "-500원", probability: 0.2, amount: -500 },
+      { result: "-1000원", probability: 0.15, amount: -1000 },
+      { result: "-5000원", probability: 0.1, amount: -5000 },
+      { result: "500원", probability: 0.2, amount: 500 },
+      { result: "1000원", probability: 0.15, amount: 1000 },
+      { result: "5000원", probability: 0.09, amount: 5000 },
+      { result: "10000원", probability: 0.01, amount: 10000 }
+    ];
+
+    let chances = 10;
+    let balance = 0;
+    let gameActive = true;
+    let level = 1;
+    let experience = 0;
+    const experiencePerLevel = 10000;
+
+    const chanceDisplay = document.getElementById("chances");
+    const balanceDisplay = document.getElementById("balance");
+    const levelDisplay = document.getElementById("level");
+    const experienceDisplay = document.getElementById("experience");
+    const experiencePerLevelDisplay = document.getElementById("experience-per-level");
+
+    const buyChanceButton = document.getElementById("buy-chance-btn");
+    const giveUpButton = document.getElementById("give-up-btn");
+    const gameTable = document.getElementById("gameTable");
+    const probabilityTableBody = document.getElementById("probabilityTableBody");
+    const tableCells = [];
+
+    function showTutorial() {
+      document.getElementById('tutorial-overlay').style.display = 'flex';
+    }
+
+    function hideTutorial() {
+      document.getElementById('tutorial-overlay').style.display = 'none';
+    }
+
+    function updateInfoBar() {
+      chanceDisplay.textContent = chances;
+      balanceDisplay.textContent = balance;
+      updateLevelInfo();
+    }
+
+    function updateLevelInfo() {
+      levelDisplay.textContent = level;
+      experienceDisplay.textContent = experience;
+      experiencePerLevelDisplay.textContent = experiencePerLevel;
+    }
+
+    function getRandomOutcome() {
+      const rand = Math.random();
+      let cumulativeProbability = 0;
+      for (const outcome of outcomes) {
+        cumulativeProbability += outcome.probability;
+        if (rand < cumulativeProbability) {
+          return outcome;
+        }
+      }
+      return outcomes[0];
+    }
+
+    function disableGame() {
+      gameActive = false;
+      gameTable.querySelectorAll('td').forEach(cell => {
+        cell.onclick = null;
+        cell.style.cursor = 'default';
+        cell.tabIndex = -1;
+      });
+      buyChanceButton.disabled = true;
+      giveUpButton.disabled = true;
+      buyChanceButton.tabIndex = -1;
+      giveUpButton.tabIndex = -1;
+    }
+
+    function createProbabilityTable() {
+      outcomes.forEach(outcome => {
+        const row = document.createElement("tr");
+        const resultCell = document.createElement("td");
+        resultCell.textContent = outcome.result;
+        const probabilityCell = document.createElement("td");
+        probabilityCell.textContent = (outcome.probability * 100) + "%";
+        row.appendChild(resultCell);
+        row.appendChild(probabilityCell);
+        probabilityTableBody.appendChild(row);
+      });
+    }
+
+    function createTable() {
+      const table = document.getElementById("gameTable");
+      for (let i = 0; i < 10; i++) {
+        const row = document.createElement("tr");
+        const rowCells = [];
+        for (let j = 0; j < 10; j++) {
+          const cell = document.createElement("td");
+          cell.setAttribute("role", "gridcell");
+          cell.setAttribute("aria-label", "게임 칸");
+          cell.tabIndex = 0;
+          rowCells.push(cell);
+          cell.addEventListener("click", function() {
+            if (!gameActive) return;
+            if (chances > 0) {
+              chances--;
+              updateInfoBar();
+              const outcome = getRandomOutcome();
+              this.dataset.result = outcome.result;
+              this.dataset.amount = outcome.amount;
+              const result = this.dataset.result;
+              const amount = parseInt(this.dataset.amount, 10);
+              this.textContent = result;
+              this.classList.add(getResultClass(result));
+              this.classList.add('clicked');
+              clickSound.play();
+              setTimeout(() => {
+                this.classList.remove('clicked');
+              }, 150);
+              balance += amount;
+              updateInfoBar();
+              const expGain = Math.max(0, amount);
+              experience += expGain;
+              updateLevelInfo();
+              if (experience >= experiencePerLevel) {
+                level++;
+                experience -= experiencePerLevel;
+                updateLevelInfo();
+                alert(`🎉 레벨업! 레벨 ${level} 달성! 🎉`);
+              }
+              if (balance <= -10000) {
+                alert("파산! 게임 오버!");
+                disableGame();
+                return;
+              }
+              if (chances === 0) {
+                const confirmBuy = confirm("기회를 모두 소진했습니다. 기회를 추가 구매하시겠습니까? \n\n (취소: 포기하기)");
+                if (confirmBuy) {
+                  buyChanceButton.click();
+                } else {
+                  alert("포기! 게임 오버!");
+                  disableGame();
+                }
+              }
+            } else {
+              alert("기회가 없습니다. 기회를 구매해주세요.");
+            }
+          });
+          row.appendChild(cell);
+        }
+        table.appendChild(row);
+        tableCells.push(rowCells);
+      }
+    }
+
+    function getResultClass(result) {
+      switch (result) {
+        case "꽝": return "꽝";
+        case "-500원": return "minus-500";
+        case "-1000원": return "minus-1000";
+        case "-5000원": return "minus-5000";
+        case "500원": return "plus-500";
+        case "1000원": return "plus-1000";
+        case "5000원": return "plus-5000";
+        case "10000원": return "plus-10000";
+        default: return "";
+      }
+    }
+
+    buyChanceButton.addEventListener("click", function() {
+      if (!gameActive) return;
+      if (balance >= 500) {
+        balance -= 500;
+        chances += 1;
+        updateInfoBar();
+      } else {
+        alert("자금이 부족합니다.");
+      }
+    });
+
+    giveUpButton.addEventListener("click", function() {
+      if (!gameActive) return;
+      if (confirm("정말로 포기하시겠습니까?")) {
+        alert("포기! 게임 오버!");
+        disableGame();
+      }
+    });
+
+    // 키보드 접근성: 테이블 셀 이동 및 선택
+    document.addEventListener('keydown', function(event) {
+      if (!gameActive) return;
+      const focusedElement = document.activeElement;
+      if (focusedElement.tagName === 'TD' && focusedElement.closest('#gameTable')) {
+        const currentRowIndex = focusedElement.parentNode.rowIndex;
+        const currentCellIndex = focusedElement.cellIndex;
+        let nextCell = null;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          focusedElement.click();
+        } else if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          const nextRowIndex = Math.max(0, currentRowIndex - 1);
+          nextCell = tableCells[nextRowIndex][currentCellIndex];
+        } else if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          const nextRowIndex = Math.min(9, currentRowIndex + 1);
+          nextCell = tableCells[nextRowIndex][currentCellIndex];
+        } else if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          const nextCellIndex = Math.max(0, currentCellIndex - 1);
+          nextCell = tableCells[currentRowIndex][nextCellIndex];
+        } else if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          const nextCellIndex = Math.min(9, currentCellIndex + 1);
+          nextCell = tableCells[currentRowIndex][nextCellIndex];
+        }
+        if (nextCell) {
+          nextCell.focus();
+        }
+      }
+    });
+
+    // 초기화: 튜토리얼, 정보 업데이트, 테이블 생성
+    showTutorial();
+    updateInfoBar();
+    updateLevelInfo();
+    createProbabilityTable();
+    createTable();
+    document.getElementById('tutorial-close-btn').addEventListener('click', hideTutorial);
+  </script>
+</body>
+</html>
